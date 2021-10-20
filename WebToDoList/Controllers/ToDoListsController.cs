@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic.CompilerServices;
 using WebToDoList.Data;
 using WebToDoList.Models;
 
@@ -20,9 +22,29 @@ namespace WebToDoList.Controllers
         }
 
         // GET: ToDoLists
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string taskPriority, string taskData)
         {
-            return View(await _context.ToDoList.ToListAsync());
+            IQueryable<string> genreQuery = from m in _context.ToDoList
+                                            orderby m.priority
+                                            select m.priority;
+            var tasks = from m in _context.ToDoList
+                       select m;
+            
+            if (!string.IsNullOrEmpty(taskPriority))
+            {
+                tasks = tasks.Where(s => s.dateOfCompletion == DateTime.Parse(taskPriority));
+            }
+
+            if (!string.IsNullOrEmpty(taskData)) 
+            {
+                tasks = tasks.Where(s => s.priority == taskData);
+            }
+            var toDoListGenreVM = new ToDoListGenreViewModel
+            {
+                Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
+                ToDoLists = await tasks.ToListAsync()
+            };
+            return View(toDoListGenreVM);
         }
 
         // GET: ToDoLists/Details/5
