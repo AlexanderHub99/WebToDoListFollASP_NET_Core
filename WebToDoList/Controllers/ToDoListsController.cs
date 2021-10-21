@@ -22,11 +22,16 @@ namespace WebToDoList.Controllers
         }
 
         // GET: ToDoLists
-        public async Task<IActionResult> Index(string taskPriority, string taskData)
+        public async Task<IActionResult> Index(string taskPriority, string taskData, string Completed)
         {
             IQueryable<string> genreQuery = from m in _context.ToDoList
                                             orderby m.priority
                                             select m.priority;
+
+            IQueryable<bool> completed = from m in _context.ToDoList
+                                         orderby m.CompletedNotCompleted
+                                         select m.CompletedNotCompleted;
+
             var tasks = from m in _context.ToDoList
                        select m;
             
@@ -39,6 +44,12 @@ namespace WebToDoList.Controllers
             {
                 tasks = tasks.Where(s => s.priority == taskData);
             }
+
+            if (!string.IsNullOrEmpty(Completed))
+            {
+                tasks = tasks.Where(s => s.CompletedNotCompleted == bool.Parse(Completed));
+            }
+
             var toDoListGenreVM = new ToDoListGenreViewModel
             {
                 Genres = new SelectList(await genreQuery.Distinct().ToListAsync()),
@@ -108,7 +119,7 @@ namespace WebToDoList.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("id,Task,dateOfCompletion,priority")] ToDoList toDoList)
+        public async Task<IActionResult> Edit(int id, [Bind("id,Task,dateOfCompletion,priority,CompletedNotCompleted")] ToDoList toDoList)
         {
             if (id != toDoList.id)
             {
